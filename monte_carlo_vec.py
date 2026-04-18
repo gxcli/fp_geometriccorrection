@@ -9,15 +9,28 @@ import auxiliary_funcs as af
 import collisions_vec as col
 
 
-def _reflect_boundaries(v_new): # reflecting boundaries 
+# def _reflect_boundaries(v_new): # reflecting boundaries 
+#     v_new = np.asarray(v_new, dtype=float)
+#     v_new[..., 0] = np.abs(v_new[..., 0])
+
+#     xi = v_new[..., 1]
+#     mask = (xi < -1) | (xi > 1)
+#     while np.any(mask):
+#         xi = np.where(xi < -1, -2 - xi, np.where(xi > 1, 2 - xi, xi))
+#         mask = (xi < -1) | (xi > 1)
+
+#     v_new[..., 1] = xi
+#     return v_new
+
+
+def _reflect_boundaries(v_new):
     v_new = np.asarray(v_new, dtype=float)
+
     v_new[..., 0] = np.abs(v_new[..., 0])
 
     xi = v_new[..., 1]
-    mask = (xi < -1) | (xi > 1)
-    while np.any(mask):
-        xi = np.where(xi < -1, -2 - xi, np.where(xi > 1, 2 - xi, xi))
-        mask = (xi < -1) | (xi > 1)
+    xi = ((xi + 1) % 4) - 1 # Map to periodic domain of length 4 centered at 0
+    xi = np.where(xi > 1, 2 - xi, xi) # Reflect into [-1,1]
 
     v_new[..., 1] = xi
     return v_new
