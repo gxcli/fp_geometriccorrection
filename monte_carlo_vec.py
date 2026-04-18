@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import concurrent.futures
 
 import parameters as p
 import auxiliary_funcs as af 
@@ -61,7 +62,21 @@ def singlestep_mc(v_current, D_func, A_func, dt, R, Phi): # single step of multi
     return v_new, escape
 
 
-def run_mc_nopar(source, numsteps, D_func, A_func, dt, R, Phi):  # batch of particles
+def _split_source_chunks(source, nprocs):
+    source = np.asarray(source, dtype=float)
+    if source.ndim == 1:
+        source = source.reshape(1, 2)
+
+    numparticles = source.shape[0]
+    if nprocs <= 1 or numparticles == 0:
+        return [source]
+
+    nprocs = min(int(nprocs), numparticles)
+    chunks = np.array_split(source, nprocs)
+    return [chunk for chunk in chunks if chunk.size > 0]
+
+
+def _run_mc_nopar_single(source, numsteps, D_func, A_func, dt, R, Phi):  # batch of particles
     source = np.asarray(source, dtype=float)
     if source.ndim == 1:
         source = source.reshape(1, 2)
@@ -101,7 +116,7 @@ def run_mc_nopar(source, numsteps, D_func, A_func, dt, R, Phi):  # batch of part
 
 
 
-def run_mc(source, numsteps, D_func, A_func, dt, R, Phi):
+def _run_mc_single(source, numsteps, D_func, A_func, dt, R, Phi):
     source = np.asarray(source, dtype=float)
     if source.ndim == 1:
         source = source.reshape(1, 2)
@@ -134,3 +149,48 @@ def run_mc(source, numsteps, D_func, A_func, dt, R, Phi):
 
     terminated = escaped
     return last_velocity[terminated], step_counts[terminated], escaped[terminated]
+
+
+def _run_mc_nopar_chunk(args):
+    return _run_mc_nopar_single(*args)
+
+
+def _run_mc_chunk(args):
+    return _run_mc_single(*args)
+
+
+def run_mc_nopar(source, numsteps, D_func, A_func, dt, R, Phi, nprocs=1):
+    source = np.asarray(source, dtype=float)
+    chunks = _split_source_chunks(source, nprocs)
+    if len(chunks) == 1:
+        return _run_mc_nopar_single(source, numsteps, D_func, A_func, dt, R, Phi)
+
+    args = [(chunk, numsteps, D_func, A_func, dt, R, Phi) for chunk in chunks]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=len(args)) as executor:
+        results = list(executor.map(_run_mc_nopar_chunk, args))
+
+    velocities, steps, escaped, trapped = zip(*results)
+    return (
+        np.concatenate(velocities, axis=0),
+        np.concatenate(steps, axis=0),
+        np.concatenate(escaped, axis=0),
+        np.concatenate(trapped, axis=0),
+    )
+
+
+def run_mc(source, numsteps, D_func, A_func, dt, R, Phi, nprocs=1):
+    source = np.asarray(source, dtype=float)
+    chunks = _split_source_chunks(source, nprocs)
+    if len(chunks) == 1:
+        return _run_mc_single(source, numsteps, D_func, A_func, dt, R, Phi)
+
+    args = [(chunk, numsteps, D_func, A_func, dt, R, Phi) for chunk in chunks]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=len(args)) as executor:
+        results = list(executor.map(_run_mc_chunk, args))
+
+    velocities, steps, escaped = zip(*results)
+    return (
+        np.concatenate(velocities, axis=0),
+        np.concatenate(steps, axis=0),
+        np.concatenate(escaped, axis=0),
+    )
