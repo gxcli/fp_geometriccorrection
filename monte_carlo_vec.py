@@ -1,4 +1,6 @@
-
+''' 
+Scripts written by ChatGPT in GitHub Copilot, based on the scripts in the archive folder. 
+'''
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -9,28 +11,14 @@ import auxiliary_funcs as af
 import collisions_vec as col
 
 
-# def _reflect_boundaries(v_new): # reflecting boundaries 
-#     v_new = np.asarray(v_new, dtype=float)
-#     v_new[..., 0] = np.abs(v_new[..., 0])
-
-#     xi = v_new[..., 1]
-#     mask = (xi < -1) | (xi > 1)
-#     while np.any(mask):
-#         xi = np.where(xi < -1, -2 - xi, np.where(xi > 1, 2 - xi, xi))
-#         mask = (xi < -1) | (xi > 1)
-
-#     v_new[..., 1] = xi
-#     return v_new
-
-
 def _reflect_boundaries(v_new):
     v_new = np.asarray(v_new, dtype=float)
 
     v_new[..., 0] = np.abs(v_new[..., 0])
 
     xi = v_new[..., 1]
-    xi = ((xi + 1) % 4) - 1 # Map to periodic domain of length 4 centered at 0
-    xi = np.where(xi > 1, 2 - xi, xi) # Reflect into [-1,1]
+    xi = ((xi + 1) % 4) - 1 # map to periodic domain of length 4 centered at 0
+    xi = np.where(xi > 1, 2 - xi, xi) # reflect into [-1,1]
 
     v_new[..., 1] = xi
     return v_new
@@ -66,7 +54,7 @@ def singlestep_mc(v_current, D_func, A_func, dt, R, Phi): # single step of multi
     v_new = v_current + dv_D + dv_A
     v_new = _reflect_boundaries(v_new)
 
-    lc_condition = np.sqrt(1 - (1 - Phi**2 / v_new[..., 0]**2) / R) - np.abs(v_new[..., 1])
+    lc_condition = np.sqrt(1 - (1 - Phi / v_new[..., 0]**2) / R) - np.abs(v_new[..., 1])
     escape = lc_condition < 0
 
     if scalar_input:
@@ -94,7 +82,7 @@ def _run_mc_nopar_single(source, numsteps, D_func, A_func, dt, R, Phi):  # batch
     if source.ndim == 1:
         source = source.reshape(1, 2)
 
-    trap_threshold = Phi # if goes past loss cone, then trapped
+    trap_threshold = np.sqrt(Phi) # if goes past loss cone, then trapped
     numparticles = source.shape[0]
     v_current = source.copy()
     last_velocity = np.zeros_like(v_current)

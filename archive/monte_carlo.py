@@ -5,8 +5,8 @@ from tqdm import tqdm
 from numpy.random import multivariate_normal
 
 import parameters as p
-import auxiliary_funcs as af 
-import old_code.collisions_old as col
+import archive.auxiliary_funcs as af 
+import archive.collisions as col
 
 
 def singlestep_mc(v_current, D_func, A_func, dt, R, Phi):
@@ -29,7 +29,7 @@ def singlestep_mc(v_current, D_func, A_func, dt, R, Phi):
         elif v_new[1] > 1:
             v_new[1] = 2 - v_new[1]
     
-    lc_condition = np.sqrt(1 - (1 - Phi**2/v_new[0]**2) / R) - np.abs(v_new[1]) # track if in loss cone
+    lc_condition = np.sqrt(1 - (1 - Phi/v_new[0]**2) / R) - np.abs(v_new[1]) # track if in loss cone
     if lc_condition < 0: 
         escape = True
 

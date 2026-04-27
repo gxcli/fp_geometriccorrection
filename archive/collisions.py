@@ -1,6 +1,7 @@
 import numpy as np
 import parameters as p
-import auxiliary_funcs as af
+import archive.auxiliary_funcs as af
+
 
 # PITCH ANGLE ##########################################################
 def Asim_xi(v_current, reg=False): 
@@ -67,8 +68,8 @@ def D_xx(v_current, reg=True):
 # TOTAL DRIFT VECTOR AND DIFFUSION TENSOR ###############################
 # x, xi means full operator 
 # no geom means no geometrical correction
-# alej means Dxx is zero and no geometrical correction
-# should do Alej where Dxx is zero
+# Mesa means Dxx is zero and no geometrical correction
+# should do Mesa where Dxx is zero
 
 def D_xxi(v_current, reg=True): 
     Dxx = D_xx(v_current, reg=reg)
@@ -102,7 +103,7 @@ def A_nopar(v_current, reg=True): # Dxx = 0 with geometrical correction
     return np.array([A_x, A_xi])
 
 
-def A_alej(v_current, reg=True): # Dxx = 0 without geometrical correction
+def A_mesa(v_current, reg=True): # Dxx = 0 without geometrical correction
     A_x = Aa_x(v_current, reg=reg)
     A_xi = 0
     return np.array([A_x, A_xi])

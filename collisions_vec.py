@@ -63,8 +63,8 @@ def D_xx(v_current, reg=True):
 # TOTAL DRIFT VECTOR AND DIFFUSION TENSOR ###############################
 # x, xi means full operator 
 # no geom means no geometrical correction
-# alej means Dxx is zero and no geometrical correction
-# should do Alej where Dxx is zero
+# Mesa means Dxx is zero and no geometrical correction
+# should do Mesa where Dxx is zero
 
 def D_xxi(v_current, reg=True):
     Dxx = D_xx(v_current, reg=reg)
@@ -107,7 +107,7 @@ def A_nopar(v_current, reg=True):
     return np.stack([A_x, A_xi], axis=-1)
 
 
-def A_alej(v_current, reg=True):
+def A_mesa(v_current, reg=True):
     v_current = np.asarray(v_current, dtype=float)
     A_x = Aa_x(v_current, reg=reg) # no correction in energy since Dxx=0
     A_xi = np.zeros_like(A_x) # no correction in pitch angle 
